@@ -1,0 +1,14 @@
+services:
+  network-mcp:
+    build: .
+    container_name: network-mcp
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Bind inside the container; host exposure is restricted by the port mapping.
+      HOST: 0.0.0.0
+      DB_PATH: /data/db.json
+    ports:
+      - "127.0.0.1:4123:4123"
+    volumes:
+      - ./data:/data

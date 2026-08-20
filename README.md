@@ -14,6 +14,29 @@ bun run start
 
 The service listens on `127.0.0.1:4123` by default.
 
+## Docker
+
+For the hosted/home setup, run it with Docker Compose:
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+```
+
+The compose file binds the service to `0.0.0.0` inside the container, publishes it only on host loopback at `127.0.0.1:4123`, and persists LowDB data in `./data`.
+
+Rebuild/restart after code changes:
+
+```bash
+docker compose up -d --build
+```
+
+View logs:
+
+```bash
+docker compose logs -f network-mcp
+```
+
 ## Endpoints
 
 - `GET /health`
