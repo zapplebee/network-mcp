@@ -1,4 +1,5 @@
 import type { Config } from "../config"
+import type { AppLogger } from "../logger"
 import type { MutationResult, NetworkClient, NetworkController } from "./network-controller"
 
 type RawClient = Record<string, unknown>
@@ -11,7 +12,7 @@ type LoginSession = {
 export class UnifiUiController implements NetworkController {
   private session?: LoginSession
 
-  constructor(private readonly config: Config) {}
+  constructor(private readonly config: Config, private readonly logger: AppLogger) {}
 
   async listOnlineClients(): Promise<NetworkClient[]> {
     const response = await this.requestJson<{ data?: RawClient[] }>("GET", `/proxy/network/api/s/${this.config.udmSite}/stat/sta`)
@@ -33,6 +34,7 @@ export class UnifiUiController implements NetworkController {
 
   private async setBlocked(mac: string, blocked: boolean): Promise<MutationResult> {
     const normalizedMac = normalizeMac(mac)
+    this.logger.info("unifi_client_block_state_requested", { mac: normalizedMac, blocked })
     await this.requestJson("POST", `/proxy/network/api/s/${this.config.udmSite}/cmd/stamgr`, {
       cmd: blocked ? "block-sta" : "unblock-sta",
       mac: normalizedMac,
@@ -40,6 +42,7 @@ export class UnifiUiController implements NetworkController {
 
     const client = (await this.listKnownClients()).find((candidate) => candidate.mac === normalizedMac)
     const current = client?.blocked ?? blocked
+    this.logger.info("unifi_client_block_state_observed", { mac: normalizedMac, requestedBlocked: blocked, currentBlocked: current })
 
     return {
       mac: normalizedMac,
@@ -51,6 +54,7 @@ export class UnifiUiController implements NetworkController {
 
   private async requestJson<T>(method: string, path: string, body?: unknown, retry = true): Promise<T> {
     const session = await this.ensureSession()
+    const started = performance.now()
     const response = await fetch(`${this.config.udmBaseUrl}${path}`, {
       method,
       headers: {
@@ -62,7 +66,16 @@ export class UnifiUiController implements NetworkController {
       tls: { rejectUnauthorized: this.config.udmTlsRejectUnauthorized },
     } as RequestInit)
 
+    this.logger.debug("unifi_request", {
+      method,
+      path,
+      status: response.status,
+      durationMs: Math.round(performance.now() - started),
+      retry,
+    })
+
     if ((response.status === 401 || response.status === 403) && retry) {
+      this.logger.warn("unifi_session_refresh", { method, path, status: response.status })
       this.session = undefined
       return this.requestJson<T>(method, path, body, false)
     }
@@ -78,6 +91,7 @@ export class UnifiUiController implements NetworkController {
   private async ensureSession(): Promise<LoginSession> {
     if (this.session) return this.session
 
+    const started = performance.now()
     const response = await fetch(`${this.config.udmBaseUrl}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -88,6 +102,11 @@ export class UnifiUiController implements NetworkController {
       }),
       tls: { rejectUnauthorized: this.config.udmTlsRejectUnauthorized },
     } as RequestInit)
+
+    this.logger.info("unifi_login", {
+      status: response.status,
+      durationMs: Math.round(performance.now() - started),
+    })
 
     if (!response.ok) {
       const text = await response.text()

@@ -1,6 +1,7 @@
 export type Config = {
   host: string
   port: number
+  logLevel: string
   mcpAuthToken?: string
   udmBaseUrl: string
   udmUsername: string
@@ -20,6 +21,7 @@ export function loadConfig(): Config {
   return {
     host: process.env.HOST ?? "127.0.0.1",
     port: Number(process.env.PORT ?? "4123"),
+    logLevel: process.env.LOG_LEVEL ?? "info",
     mcpAuthToken: process.env.MCP_AUTH_TOKEN,
     udmBaseUrl: requiredEnv("UDM_BASE_URL").replace(/\/$/, ""),
     udmUsername: requiredEnv("UDM_USERNAME"),

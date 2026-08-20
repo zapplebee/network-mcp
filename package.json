@@ -13,6 +13,7 @@
     "@modelcontextprotocol/sdk": "latest",
     "hono": "latest",
     "lowdb": "latest",
+    "winston": "^3.19.0",
     "zod": "latest"
   },
   "devDependencies": {

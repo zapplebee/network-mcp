@@ -37,6 +37,8 @@ View logs:
 docker compose logs -f network-mcp
 ```
 
+Logs are emitted as JSON to stdout with Winston. Set `LOG_LEVEL=debug` to include UniFi request timing and MCP request diagnostics.
+
 ## Endpoints
 
 - `GET /health`
