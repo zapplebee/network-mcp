@@ -1,0 +1,23 @@
+{
+  "name": "network-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "typecheck": "bunx tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "latest",
+    "@modelcontextprotocol/sdk": "latest",
+    "hono": "latest",
+    "lowdb": "latest",
+    "winston": "^3.19.0",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "latest"
+  }
+}
